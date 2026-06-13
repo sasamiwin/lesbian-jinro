@@ -517,34 +517,49 @@ function startGame(){
 // ---- REVEAL ----
 // 役職確認は「タップで表示→確認したボタンで次へ」方式
 // 長押し不要でスクロールも自由
-let _revealShowing = false;
-
 function buildRevealCards(){
   const c=document.getElementById('reveal-cards');
   c.innerHTML='';
-  _revealShowing = false;
   G.players.forEach((p,i)=>{
     const div=document.createElement('div');
     div.className='reveal-card'+(i===G.revealIndex?' active-card':i<G.revealIndex?' done':'');
     if(i===G.revealIndex){
+      // タップで表示するボタンと、確認後に次へ進むボタンを分ける
       div.innerHTML=`
         <div id="rhid-${i}">
           <div style="font-size:32px;margin-bottom:10px;">👆</div>
           <div style="font-size:16px;color:var(--text-sub);margin-bottom:4px;">${p.name} さんへ</div>
-          <div style="font-size:14px;color:var(--text-hint);">タップして役職を確認</div>
+          <button id="rbtn-${i}" class="btn btn-pink" style="margin-top:4px;">タップして役職を確認</button>
         </div>
         <div id="rshow-${i}" style="display:none;">
           <div class="reveal-role-name">${ROLES[p.role].icon} ${ROLES[p.role].name}</div>
           <div class="reveal-role-desc" style="margin-bottom:16px;">${ROLES[p.role].desc}</div>
-          <button onclick="rNext(${i})" class="btn btn-pink" style="margin-top:8px;">確認した → 次の人へ</button>
+          <button id="rnext-${i}" class="btn btn-outline" style="margin-top:8px;">確認した → 次の人へ</button>
         </div>`;
-      div.addEventListener('click', ()=>rShow(i));
     }else if(i<G.revealIndex){
       div.innerHTML=`<div style="font-size:14px;color:var(--text-hint);">✅ ${p.name}</div>`;
     }else{
       div.innerHTML=`<div style="font-size:14px;color:var(--text-hint);">待機中...</div>`;
     }
     c.appendChild(div);
+
+    // イベントをDOMに追加してから設定（onclickのインライン記述を避ける）
+    if(i===G.revealIndex){
+      document.getElementById(`rbtn-${i}`).addEventListener('click', (e)=>{
+        e.stopPropagation();
+        document.getElementById(`rhid-${i}`).style.display='none';
+        document.getElementById(`rshow-${i}`).style.display='block';
+        setTimeout(()=>{
+          document.getElementById(`rshow-${i}`).scrollIntoView({behavior:'smooth',block:'center'});
+        },100);
+      });
+      document.getElementById(`rnext-${i}`).addEventListener('click', (e)=>{
+        e.stopPropagation();
+        G.revealIndex++;
+        buildRevealCards();
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+    }
   });
   const done=G.revealIndex>=G.players.length;
   document.getElementById('reveal-done-btn').style.display=done?'block':'none';
@@ -552,26 +567,9 @@ function buildRevealCards(){
     ?'全員の確認が終わりました！'
     :`${G.players[G.revealIndex].name} の番です。スマホを渡してください。`;
 }
-function rShow(i){
-  if(_revealShowing) return;
-  _revealShowing = true;
-  document.getElementById(`rhid-${i}`).style.display='none';
-  document.getElementById(`rshow-${i}`).style.display='block';
-  // 表示されたカードまでスクロール
-  setTimeout(()=>{
-    document.getElementById(`rshow-${i}`).scrollIntoView({behavior:'smooth', block:'center'});
-  }, 100);
-}
-function rNext(i){
-  G.revealIndex++;
-  _revealShowing = false;
-  buildRevealCards();
-  // 先頭にスクロール
-  window.scrollTo({top:0, behavior:'smooth'});
-}
-function rHide(i){
-  // 旧互換のため残す（使用しない）
-}
+function rShow(i){}
+function rNext(i){}
+function rHide(i){}
 
 // ---- NIGHT TURN QUEUE ----
 // Queue: ALL alive players in seat order (id order)
