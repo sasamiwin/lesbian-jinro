@@ -442,10 +442,11 @@ function updateSetupUI(){
   document.getElementById('num-display').textContent = num;
   document.getElementById('nekama-display').textContent = nekama;
 
-  // 名前フィールド更新
+  // 名前フィールド更新（人数変更時のみ既存の値を引き継ぐ、リセット後はクリア）
   const fields = document.getElementById('name-fields');
   const existing = fields.querySelectorAll('.name-input');
-  const existingVals = Array.from(existing).map(e=>e.value);
+  const existingVals = G._namesClear ? [] : Array.from(existing).map(e=>e.value);
+  G._namesClear = false;
   fields.innerHTML = '';
   for(let i=0;i<num;i++){
     fields.innerHTML+=`<div class="name-input-row">
@@ -983,12 +984,12 @@ function resetGame(){
      nekamTarget:null,guardTarget:null,lastGuard:null,
      timerSec:0,timerInterval:null,timerRunning:false,dayPhase:'talk',
      voteQueue:[],voteQueueIdx:0,votes:{},eliminated:[],
-     tieTimerSec:60,tieTimerInterval:null,tieTimerRunning:false};
-  document.querySelectorAll('.num-btn').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('role-preview').style.display='none';
-  document.getElementById('name-inputs').style.display='none';
-  document.getElementById('start-btn').style.display='none';
+     tieTimerSec:60,tieTimerInterval:null,tieTimerRunning:false,
+     _namesClear:true};
+  // UIをリセットしてから設定画面を表示
+  // start-btnやname-inputsはupdateSetupUI()が再表示するので非表示にしない
   show('screen-players');
+  // updateSetupUIはshow()内で呼ばれる
 }
 </script>
 </body>
