@@ -426,19 +426,12 @@ G.numPlayers = 5;
 G.nekamaCount = 1;
 
 function buildRoleSet(num, nekama){
-  // ネカマ、荒らし(nekama陣営)、ゲイダー、年上お姉さん、残りレズビアン
-  // 5人未満はnekama=1固定
+  // 優先順：ネカマ → ゲイダー → 年上お姉さん → 荒らし → レズビアン
   const roles = [];
   for(let i=0;i<nekama;i++) roles.push('nekama');
-  // 荒らしは1人固定（人数が許せば）
-  const remaining = num - nekama;
-  // ゲイダー
-  if(remaining >= 2) roles.push('gaydar');
-  // 年上お姉さん（6人以上）
-  if(num >= 6 && remaining >= 3) roles.push('oneeSan');
-  // 荒らし
-  if(remaining >= (roles.length - nekama + 2)) roles.push('araashi');
-  // 残りをレズビアンで埋める
+  if(num - roles.length >= 2) roles.push('gaydar');
+  if(num - roles.length >= 2) roles.push('oneeSan');
+  if(num - roles.length >= 2) roles.push('araashi');
   while(roles.length < num) roles.push('lesbian');
   return roles;
 }
