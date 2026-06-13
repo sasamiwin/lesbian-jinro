@@ -188,30 +188,48 @@ html,body{height:100%;background:#f0eef5;font-family:'Noto Sans JP',sans-serif;}
 
 <!-- PLAYER SETUP -->
 <div id="screen-players" class="screen">
-  <div class="h1">参加人数</div>
-  <div class="sub">人数を選ぶとプレイヤー名の入力欄が出ます</div>
-  <div class="num-grid">
-    <button class="num-btn" onclick="selectNum(5,this)">5人</button>
-    <button class="num-btn" onclick="selectNum(6,this)">6人</button>
-    <button class="num-btn" onclick="selectNum(7,this)">7人</button>
+  <div class="h1">ゲーム設定</div>
+  <div class="sub">人数とネカマの人数を設定してください</div>
+
+  <div class="card-surface" style="margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">👥 参加人数</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+      <button onclick="changeNum(-1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">－</button>
+      <div style="font-size:36px;font-weight:700;color:var(--pink);min-width:60px;text-align:center;" id="num-display">5</div>
+      <button onclick="changeNum(1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">＋</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-hint);text-align:center;margin-top:8px;">5〜10人</div>
   </div>
-  <div id="name-inputs" style="display:none;margin-bottom:18px;">
+
+  <div class="card-surface" style="margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">🎭 ネカマの人数</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+      <button onclick="changeNekama(-1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">－</button>
+      <div style="font-size:36px;font-weight:700;color:var(--pink);min-width:60px;text-align:center;" id="nekama-display">1</div>
+      <button onclick="changeNekama(1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">＋</button>
+    </div>
+  </div>
+
+  <div id="role-preview" style="margin-bottom:16px;">
+    <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px;">配役プレビュー</div>
+    <div id="role-chips"></div>
+    <div id="role-warning" style="font-size:12px;color:#c0392b;margin-top:8px;display:none;">⚠️ ネカマが多すぎます</div>
+  </div>
+
+  <div id="name-inputs" style="margin-bottom:18px;">
     <div style="font-size:13px;color:var(--text-hint);margin-bottom:12px;">プレイヤー名を入力（省略可）</div>
     <div id="name-fields"></div>
   </div>
-  <div id="role-preview" style="display:none;margin-bottom:18px;">
-    <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px;">配役プレビュー</div>
-    <div id="role-chips"></div>
-  </div>
+
   <div class="spacer"></div>
-  <button class="btn btn-pink" id="start-btn" style="display:none;" onclick="startGame()">役職を配布する</button>
+  <button class="btn btn-pink" id="start-btn" onclick="startGame()">役職を配布する</button>
   <button class="btn btn-outline" style="margin-top:10px;" onclick="show('screen-title')">もどる</button>
 </div>
 
 <!-- ROLE REVEAL -->
 <div id="screen-reveal" class="screen">
   <div class="h1">役職確認</div>
-  <div class="sub" id="reveal-instruction">スマホを順番に回してください。自分の番になったら長押しで役職を確認しましょう。</div>
+  <div class="sub" id="reveal-instruction">スマホを順番に回してください。自分の番になったらカードをタップして役職を確認しましょう。</div>
   <div id="reveal-cards"></div>
   <div class="spacer"></div>
   <button class="btn btn-pink" id="reveal-done-btn" style="display:none;" onclick="beginNightTurns()">全員確認完了 → 夜へ</button>
@@ -335,11 +353,7 @@ html,body{height:100%;background:#f0eef5;font-family:'Noto Sans JP',sans-serif;}
 
 </div>
 <script>
-const ROLE_SETS={
-  5:["lesbian","lesbian","nekama","gaydar","araashi"],
-  6:["lesbian","lesbian","nekama","gaydar","oneeSan","araashi"],
-  7:["lesbian","lesbian","lesbian","nekama","gaydar","oneeSan","araashi"]
-};
+// 配役はbuildRoleSet()で動的生成
 const ROLES={
   lesbian: {name:"レズビアン",icon:"💜",team:"lesbian",isActionRole:false,desc:`あなたはこのアプリを利用するレズビアンです。
 最近、男性ユーザーが紛れ込んでいるという噂が広まっています。
@@ -388,7 +402,7 @@ const GAYDAR_NEKAMA_MSGS=[
 ];
 
 let G={
-  players:[],numPlayers:0,day:1,
+  players:[],numPlayers:5,nekamaCount:1,day:1,
   revealIndex:0,
   nightQueue:[],nightQueueIdx:0,
   nekamTarget:null,guardTarget:null,lastGuard:null,
@@ -403,36 +417,92 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+  if(id==='screen-players') updateSetupUI();
 }
 
 // ---- SETUP ----
-function selectNum(n,el){
-  document.querySelectorAll('.num-btn').forEach(b=>b.classList.remove('selected'));
-  el.classList.add('selected');
-  G.numPlayers=n;
-  const fields=document.getElementById('name-fields');
-  fields.innerHTML='';
-  for(let i=0;i<n;i++){
+// 人数・ネカマ数の管理
+G.numPlayers = 5;
+G.nekamaCount = 1;
+
+function buildRoleSet(num, nekama){
+  // ネカマ、荒らし(nekama陣営)、ゲイダー、年上お姉さん、残りレズビアン
+  // 5人未満はnekama=1固定
+  const roles = [];
+  for(let i=0;i<nekama;i++) roles.push('nekama');
+  // 荒らしは1人固定（人数が許せば）
+  const remaining = num - nekama;
+  // ゲイダー
+  if(remaining >= 2) roles.push('gaydar');
+  // 年上お姉さん（6人以上）
+  if(num >= 6 && remaining >= 3) roles.push('oneeSan');
+  // 荒らし
+  if(remaining >= (roles.length - nekama + 2)) roles.push('araashi');
+  // 残りをレズビアンで埋める
+  while(roles.length < num) roles.push('lesbian');
+  return roles;
+}
+
+function updateSetupUI(){
+  const num = G.numPlayers;
+  const nekama = G.nekamaCount;
+  document.getElementById('num-display').textContent = num;
+  document.getElementById('nekama-display').textContent = nekama;
+
+  // 名前フィールド更新
+  const fields = document.getElementById('name-fields');
+  const existing = fields.querySelectorAll('.name-input');
+  const existingVals = Array.from(existing).map(e=>e.value);
+  fields.innerHTML = '';
+  for(let i=0;i<num;i++){
     fields.innerHTML+=`<div class="name-input-row">
       <label class="name-label">プレイヤー${i+1}</label>
-      <input class="name-input" id="name-${i}" type="text" placeholder="プレイヤー${i+1}" maxlength="10">
+      <input class="name-input" id="name-${i}" type="text" placeholder="プレイヤー${i+1}" maxlength="10" value="${existingVals[i]||''}">
     </div>`;
   }
-  document.getElementById('name-inputs').style.display='block';
-  const roles=ROLE_SETS[n];
-  const counts={};
+
+  // バランスチェック（ネカマが過半数以上はNG）
+  const warn = document.getElementById('role-warning');
+  const btn = document.getElementById('start-btn');
+  if(nekama >= Math.ceil(num/2)){
+    warn.style.display='block';
+    btn.disabled=true;
+    btn.style.opacity='0.4';
+  }else{
+    warn.style.display='none';
+    btn.disabled=false;
+    btn.style.opacity='1';
+  }
+
+  // 配役プレビュー
+  const roles = buildRoleSet(num, nekama);
+  const counts = {};
   roles.forEach(r=>counts[r]=(counts[r]||0)+1);
   document.getElementById('role-chips').innerHTML=Object.entries(counts).map(([r,c])=>
     `<span class="role-chip">${ROLES[r].icon} ${ROLES[r].name} ×${c}</span>`
   ).join('');
-  document.getElementById('role-preview').style.display='block';
-  document.getElementById('start-btn').style.display='block';
 }
+
+function changeNum(delta){
+  const n = Math.min(10, Math.max(5, G.numPlayers + delta));
+  G.numPlayers = n;
+  // ネカマが多すぎる場合は自動調整
+  if(G.nekamaCount >= Math.ceil(n/2)) G.nekamaCount = Math.max(1, Math.ceil(n/2)-1);
+  updateSetupUI();
+}
+
+function changeNekama(delta){
+  const max = Math.ceil(G.numPlayers/2) - 1;
+  G.nekamaCount = Math.min(max, Math.max(1, G.nekamaCount + delta));
+  updateSetupUI();
+}
+
+function selectNum(n,el){ G.numPlayers=n; updateSetupUI(); }
 
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 function startGame(){
-  const roles=shuffle(ROLE_SETS[G.numPlayers]);
+  const roles=shuffle(buildRoleSet(G.numPlayers, G.nekamaCount));
   G.players=roles.map((r,i)=>{
     const inp=document.getElementById(`name-${i}`);
     const name=(inp&&inp.value.trim())||`プレイヤー${i+1}`;
@@ -445,27 +515,30 @@ function startGame(){
 }
 
 // ---- REVEAL ----
+// 役職確認は「タップで表示→確認したボタンで次へ」方式
+// 長押し不要でスクロールも自由
+let _revealShowing = false;
+
 function buildRevealCards(){
   const c=document.getElementById('reveal-cards');
   c.innerHTML='';
+  _revealShowing = false;
   G.players.forEach((p,i)=>{
     const div=document.createElement('div');
     div.className='reveal-card'+(i===G.revealIndex?' active-card':i<G.revealIndex?' done':'');
     if(i===G.revealIndex){
       div.innerHTML=`
-        <div id="rhid-${i}" style="font-size:15px;color:var(--text-sub);">👇 長押しで役職を確認</div>
+        <div id="rhid-${i}">
+          <div style="font-size:32px;margin-bottom:10px;">👆</div>
+          <div style="font-size:16px;color:var(--text-sub);margin-bottom:4px;">${p.name} さんへ</div>
+          <div style="font-size:14px;color:var(--text-hint);">タップして役職を確認</div>
+        </div>
         <div id="rshow-${i}" style="display:none;">
           <div class="reveal-role-name">${ROLES[p.role].icon} ${ROLES[p.role].name}</div>
-          <div class="reveal-role-desc">${ROLES[p.role].desc}</div>
-        </div>
-        <div class="reveal-hint">離すと非表示になります</div>`;
-      let t;
-      div.addEventListener('touchstart',e=>{e.preventDefault();t=setTimeout(()=>rShow(i),200);},{passive:false});
-      div.addEventListener('mousedown',()=>{t=setTimeout(()=>rShow(i),200);});
-      const hide=()=>{clearTimeout(t);rHide(i);};
-      div.addEventListener('touchend',hide);
-      div.addEventListener('mouseup',hide);
-      div.addEventListener('mouseleave',hide);
+          <div class="reveal-role-desc" style="margin-bottom:16px;">${ROLES[p.role].desc}</div>
+          <button onclick="rNext(${i})" class="btn btn-pink" style="margin-top:8px;">確認した → 次の人へ</button>
+        </div>`;
+      div.addEventListener('click', ()=>rShow(i));
     }else if(i<G.revealIndex){
       div.innerHTML=`<div style="font-size:14px;color:var(--text-hint);">✅ ${p.name}</div>`;
     }else{
@@ -480,16 +553,24 @@ function buildRevealCards(){
     :`${G.players[G.revealIndex].name} の番です。スマホを渡してください。`;
 }
 function rShow(i){
+  if(_revealShowing) return;
+  _revealShowing = true;
   document.getElementById(`rhid-${i}`).style.display='none';
   document.getElementById(`rshow-${i}`).style.display='block';
+  // 表示されたカードまでスクロール
+  setTimeout(()=>{
+    document.getElementById(`rshow-${i}`).scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
+function rNext(i){
+  G.revealIndex++;
+  _revealShowing = false;
+  buildRevealCards();
+  // 先頭にスクロール
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 function rHide(i){
-  const s=document.getElementById(`rshow-${i}`);
-  if(!s||s.style.display==='none')return;
-  document.getElementById(`rhid-${i}`).style.display='block';
-  s.style.display='none';
-  G.revealIndex++;
-  buildRevealCards();
+  // 旧互換のため残す（使用しない）
 }
 
 // ---- NIGHT TURN QUEUE ----
@@ -907,7 +988,7 @@ function skipPhase(){
 }
 function resetGame(){
   clearInterval(G.timerInterval);clearInterval(G.tieTimerInterval);
-  G={players:[],numPlayers:0,day:1,revealIndex:0,nightQueue:[],nightQueueIdx:0,
+  G={players:[],numPlayers:5,nekamaCount:1,day:1,revealIndex:0,nightQueue:[],nightQueueIdx:0,
      nekamTarget:null,guardTarget:null,lastGuard:null,
      timerSec:0,timerInterval:null,timerRunning:false,dayPhase:'talk',
      voteQueue:[],voteQueueIdx:0,votes:{},eliminated:[],
