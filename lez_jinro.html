@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>レズビアン人狼</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --pink:#D4537E;--pink-light:#FBEAF0;--pink-mid:#F4C0D1;--pink-dark:#993556;--pink-deep:#4B1528;
+  --night-bg:#0f0e1a;--night-card:#1e1b2e;--night-border:#3C3489;--night-text:#CECBF6;--night-sub:#AFA9EC;
+  --bg:#fff;--surface:#fafafa;--border:rgba(0,0,0,0.1);--text:#1a1a1a;--text-sub:#666;--text-hint:#aaa;
+  --radius:16px;--radius-sm:10px;
+}
+html,body{height:100%;background:#f0eef5;font-family:'Noto Sans JP',sans-serif;}
+#app{max-width:430px;min-height:100vh;margin:0 auto;background:var(--bg);}
+.screen{display:none;flex-direction:column;min-height:100vh;padding:52px 22px 44px;animation:fadeIn .22s ease;}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.btn{width:100%;padding:15px;border:none;border-radius:var(--radius);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;transition:transform .1s,opacity .1s;}
+.btn:active{transform:scale(.97);opacity:.9;}
+.btn-pink{background:var(--pink);color:#fff;}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border);}
+.btn-night{background:#2d2850;color:var(--night-text);}
+.btn-danger{background:#c0392b;color:#fff;}
+.btn+.btn{margin-top:10px;}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px;}
+.card-surface{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
+.notif{background:#fff5f9;border:1px solid var(--pink-mid);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;}
+.notif-from{font-size:11px;color:var(--pink-dark);font-weight:700;letter-spacing:.5px;margin-bottom:4px;}
+.notif-body{font-size:14px;color:var(--pink-deep);line-height:1.7;}
+.phase-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;font-size:12px;font-weight:700;margin-bottom:16px;width:fit-content;}
+.badge-night{background:#26215C;color:#CECBF6;}
+.badge-day{background:#fff5f9;color:var(--pink-dark);border:1px solid var(--pink-mid);}
+.badge-vote{background:#fff8e6;color:#7a5c00;border:1px solid #f0d07a;}
+.h1{font-size:24px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.h2{font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.sub{font-size:14px;color:var(--text-sub);line-height:1.7;margin-bottom:18px;}
+.spacer{flex:1;}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* TITLE */
+#screen-title{background:linear-gradient(160deg,#fff 0%,#fdf2f7 100%);justify-content:space-between;}
+.title-hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:20px;}
+.title-main{font-size:44px;font-weight:700;color:var(--pink);line-height:1.1;margin-bottom:12px;letter-spacing:-1px;}
+
+/* SETUP */
+.num-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.num-btn{padding:20px 8px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);font-size:22px;font-weight:700;cursor:pointer;text-align:center;color:var(--text);transition:all .15s;font-family:inherit;}
+.num-btn.selected{border-color:var(--pink);color:var(--pink);background:var(--pink-light);}
+.role-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--pink-light);border-radius:99px;font-size:13px;color:var(--pink-dark);border:1px solid var(--pink-mid);margin:3px;}
+.name-input-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.name-label{font-size:12px;color:var(--text-hint);letter-spacing:.3px;}
+.name-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:inherit;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;}
+.name-input:focus{border-color:var(--pink);}
+
+/* REVEAL */
+.reveal-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:10px;text-align:center;user-select:none;-webkit-user-select:none;}
+.reveal-card.active-card{border-color:var(--pink);background:var(--pink-light);}
+.reveal-card.done{border-color:#ddd;opacity:.5;}
+.reveal-hint{font-size:12px;color:var(--text-hint);margin-top:8px;}
+.reveal-role-name{font-size:26px;font-weight:700;color:var(--pink);margin-bottom:8px;}
+.reveal-role-desc{font-size:13px;color:var(--text-sub);line-height:1.6;}
+
+/* NIGHT PASS SCREEN */
+#screen-night-pass{background:#0f0e1a;}
+#screen-night-next{background:#0f0e1a;}
+.npass-app-frame{background:#1a1830;border:1px solid #2d2a50;border-radius:20px;padding:20px;margin-bottom:20px;}
+.npass-app-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #2d2a50;}
+.npass-app-icon{width:38px;height:38px;border-radius:10px;background:var(--pink);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.npass-app-name{font-size:14px;font-weight:700;color:var(--night-text);}
+.npass-app-sub{font-size:11px;color:var(--night-sub);}
+.npass-activity{font-size:15px;color:var(--night-text);line-height:1.8;padding:4px 0;}
+.npass-name-label{font-size:22px;font-weight:700;color:var(--night-text);margin-bottom:10px;}
+.npass-instruction{font-size:14px;color:var(--night-sub);line-height:1.7;margin-bottom:28px;}
+
+/* NIGHT ACTION */
+#screen-night{background:var(--night-bg);}
+#screen-night .h2{color:var(--night-text);}
+#screen-night .sub{color:var(--night-sub);}
+.night-card{background:var(--night-card);border:1px solid var(--night-border);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
+.night-player-btn{width:100%;text-align:left;padding:12px 16px;background:transparent;border:1px solid #3C3489;border-radius:var(--radius-sm);color:var(--night-text);font-size:15px;cursor:pointer;margin-bottom:8px;font-family:inherit;transition:background .15s;}
+.night-player-btn.selected{background:#3C3489;border-color:#7F77DD;}
+.dm-phone{background:#1a1a2e;border-radius:20px;padding:16px;margin-bottom:16px;border:1px solid #2d2a50;}
+.dm-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #2d2a50;}
+.dm-avatar{width:36px;height:36px;border-radius:50%;background:var(--pink);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.dm-username{font-size:14px;font-weight:700;color:var(--night-text);}
+.dm-app{font-size:11px;color:var(--night-sub);}
+.dm-bubble-wrap{display:flex;justify-content:flex-end;margin-bottom:8px;}
+.dm-bubble{background:var(--pink);color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:14px;line-height:1.6;max-width:88%;}
+
+/* DAY */
+.timer-big{font-size:60px;font-weight:700;text-align:center;color:var(--pink);font-variant-numeric:tabular-nums;margin:6px 0 14px;letter-spacing:-2px;}
+.timer-big.warning{color:#c0392b;}
+.timer-label{font-size:12px;text-align:center;color:var(--text-hint);letter-spacing:.5px;margin-bottom:2px;}
+.topic-box{background:var(--surface);border-radius:var(--radius);padding:18px;margin-bottom:16px;text-align:center;}
+.topic-label{font-size:11px;color:var(--text-hint);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.topic-text{font-size:18px;font-weight:700;color:var(--text);line-height:1.5;}
+.eliminated-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f5;border-radius:99px;font-size:12px;color:var(--text-sub);margin:3px;}
+.day-phase-block{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:14px;border-left:4px solid var(--pink);}
+.day-phase-title{font-size:13px;font-weight:700;color:var(--pink-dark);margin-bottom:4px;}
+.day-phase-desc{font-size:13px;color:var(--text-sub);line-height:1.6;}
+
+/* VOTE PASS */
+#screen-vote-pass{background:#fffdf5;justify-content:center;align-items:center;text-align:center;}
+.vpass-name{font-size:26px;font-weight:700;color:#7a5c00;margin-bottom:10px;}
+.vpass-msg{font-size:15px;color:#5a4500;line-height:1.7;margin-bottom:36px;white-space:pre-line;}
+
+/* VOTE */
+.vote-item{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;cursor:pointer;background:var(--bg);}
+.vote-item.voted-for{border-color:var(--pink);background:var(--pink-light);}
+.vote-name{font-size:16px;color:var(--text);}
+.vote-count{font-size:13px;color:var(--text-hint);min-width:32px;text-align:right;}
+.vote-item.voted-for .vote-count{color:var(--pink);font-weight:700;}
+
+/* TIETIMER */
+#screen-tie{background:#fff8e6;justify-content:center;align-items:center;text-align:center;}
+
+/* RESULT */
+#screen-result{justify-content:center;align-items:center;text-align:center;}
+.result-emoji{font-size:72px;margin-bottom:20px;animation:pop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.result-title{font-size:26px;font-weight:700;margin-bottom:12px;}
+.result-sub{font-size:14px;color:var(--text-sub);line-height:1.9;margin-bottom:32px;white-space:pre-line;}
+
+/* RULES */
+.rules-role-item{display:flex;gap:14px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--border);}
+.rules-role-item:last-child{border-bottom:none;}
+.rules-icon{font-size:22px;flex-shrink:0;width:30px;text-align:center;}
+.rules-text strong{font-weight:700;color:var(--text);font-size:15px;display:block;margin-bottom:2px;}
+.rules-text span{font-size:13px;color:var(--text-sub);line-height:1.6;}
+.rules-team{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;}
+.team-les{background:#e8f5e9;color:#2e7d32;}
+.team-nkm{background:#fce4ec;color:#880e4f;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TITLE -->
+<div id="screen-title" class="screen active">
+  <div class="title-hero">
+    <div class="notif">
+      <div class="notif-from">🔔 RESE（レズビアン向けマッチングアプリ）</div>
+      <div class="notif-body">男性利用者が紛れ込んでいる可能性があります。ご注意ください。</div>
+    </div>
+    <div class="title-main">レズビアン<br>人狼</div>
+    <div style="font-size:15px;color:var(--text-sub);line-height:1.7;">マッチングアプリに潜むネカマを通報せよ。<br>1台のスマホをみんなで回してプレイ。</div>
+  </div>
+  <div>
+    <button class="btn btn-pink" onclick="show('screen-players')">はじめる</button>
+    <button class="btn btn-outline" onclick="show('screen-rules')">ルール確認</button>
+  </div>
+</div>
+
+<!-- RULES -->
+<div id="screen-rules" class="screen">
+  <div class="h1">登場人物</div>
+  <div class="sub">マッチングアプリ上の設定でプレイします</div>
+  <div class="card" style="padding:8px 16px;">
+    <div class="rules-role-item"><div class="rules-icon">💜</div><div class="rules-text"><strong>レズビアン <span class="rules-team team-les">村人</span></strong><span>このアプリを利用するレズビアン。他の利用者と協力し、怪しいアカウントを通報しよう。</span></div></div>
+    <div class="rules-role-item"><div class="rules-icon">🎭</div><div class="rules-text"><strong>ネカマ <span class="rules-team team-nkm">人狼</span></strong><span>女性を装って登録中。毎晩1人にDMを送り、翌朝退会させる。正体を隠し利用者を騙せ。</span></div></div>
+    <div class="rules-role-item"><div class="rules-icon">🔮</div><div class="rules-text"><strong>ゲイダー <span class="rules-team team-les">占い師</span></strong><span>優れた感覚を持つレズビアン。毎晩1人の正体を調査できる。荒らしはレズビアンと表示される。</span></div></div>
+    <div class="rules-role-item"><div class="rules-icon">🛡️</div><div class="rules-text"><strong>年上お姉さん <span class="rules-team team-les">騎士</span></strong><span>包容力のある年上のお姉さん。毎晩1人を見守り、その夜のDMから守る。</span></div></div>
+    <div class="rules-role-item"><div class="rules-icon">🔥</div><div class="rules-text"><strong>荒らし <span class="rules-team team-nkm">狂信者</span></strong><span>面白半分で荒らす悪質ユーザー。ネカマ陣営として混乱を引き起こせ。ゲイダーに調査されてもレズビアンと表示される。</span></div></div>
+  </div>
+  <hr class="divider">
+  <div class="card-surface">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">🏆 勝敗条件</div>
+    <div style="font-size:13px;color:var(--text-sub);line-height:1.9;">
+      💜 <b>レズビアン陣営</b>：ネカマを全員BANする<br>
+      🎭 <b>ネカマ陣営</b>：生存者の中でネカマが過半数を占める
+    </div>
+  </div>
+  <div class="card-surface">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">📖 脱落の設定</div>
+    <div style="font-size:13px;color:var(--text-sub);line-height:1.9;">
+      😢 <b>夜の脱落</b>：ネカマのDMにショックを受け自主退会<br>
+      🚫 <b>昼の脱落</b>：みんなの投票で運営がアカウントBAN
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn btn-outline" onclick="show('screen-title')">もどる</button>
+</div>
+
+<!-- PLAYER SETUP -->
+<div id="screen-players" class="screen">
+  <div class="h1">ゲーム設定</div>
+  <div class="sub">人数とネカマの人数を設定してください</div>
+
+  <div class="card-surface" style="margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">👥 参加人数</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+      <button onclick="changeNum(-1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">－</button>
+      <div style="font-size:36px;font-weight:700;color:var(--pink);min-width:60px;text-align:center;" id="num-display">5</div>
+      <button onclick="changeNum(1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">＋</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-hint);text-align:center;margin-top:8px;">5〜10人</div>
+  </div>
+
+  <div class="card-surface" style="margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">🎭 ネカマの人数</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+      <button onclick="changeNekama(-1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">－</button>
+      <div style="font-size:36px;font-weight:700;color:var(--pink);min-width:60px;text-align:center;" id="nekama-display">1</div>
+      <button onclick="changeNekama(1)" style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">＋</button>
+    </div>
+  </div>
+
+  <div id="role-preview" style="margin-bottom:16px;">
+    <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px;">配役プレビュー</div>
+    <div id="role-chips"></div>
+    <div id="role-warning" style="font-size:12px;color:#c0392b;margin-top:8px;display:none;">⚠️ ネカマが多すぎます</div>
+  </div>
+
+  <div id="name-inputs" style="margin-bottom:18px;">
+    <div style="font-size:13px;color:var(--text-hint);margin-bottom:12px;">プレイヤー名を入力（省略可）</div>
+    <div id="name-fields"></div>
+  </div>
+
+  <div class="spacer"></div>
+  <button class="btn btn-pink" id="start-btn" onclick="startGame()">役職を配布する</button>
+  <button class="btn btn-outline" style="margin-top:10px;" onclick="show('screen-title')">もどる</button>
+</div>
+
+<!-- ROLE REVEAL -->
+<div id="screen-reveal" class="screen">
+  <div class="h1">役職確認</div>
+  <div class="sub" id="reveal-instruction">スマホを順番に回してください。自分の番になったらカードをタップして役職を確認しましょう。</div>
+  <div id="reveal-cards"></div>
+  <div class="spacer"></div>
+  <button class="btn btn-pink" id="reveal-done-btn" style="display:none;" onclick="beginNightTurns()">全員確認完了 → 夜へ</button>
+</div>
+
+<!-- NIGHT PASS (村人・荒らし) -->
+<div id="screen-night-pass" class="screen">
+  <div class="phase-badge badge-night" style="margin-bottom:20px;">🌙 夜フェーズ — <span id="npass-day"></span></div>
+  <div class="npass-name-label" id="npass-name"></div>
+  <div class="npass-instruction" id="npass-instruction">今夜のあなたの活動</div>
+  <div class="npass-app-frame">
+    <div class="npass-app-header">
+      <div class="npass-app-icon">💜</div>
+      <div><div class="npass-app-name">RESE</div><div class="npass-app-sub">レズビアン向けマッチングアプリ</div></div>
+    </div>
+    <div class="npass-activity" id="npass-activity"></div>
+  </div>
+  <button class="btn btn-night" onclick="nightTurnNext()">確認した → 次の人へ</button>
+</div>
+
+<!-- NIGHT NEXT (次の人への引き渡し画面) -->
+<div id="screen-night-next" class="screen">
+  <div class="phase-badge badge-night" style="margin-bottom:20px;">🌙 夜フェーズ — <span id="nnext-day"></span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;">
+    <div style="font-size:40px;margin-bottom:20px;">📱</div>
+    <div style="font-size:22px;font-weight:700;color:var(--night-text);margin-bottom:12px;" id="nnext-name"></div>
+    <div style="font-size:15px;color:var(--night-sub);line-height:1.7;" id="nnext-msg">の番です。<br>スマホを渡してください。</div>
+  </div>
+  <button class="btn btn-night" onclick="nightNextAfterHandoff()">受け取った</button>
+</div>
+
+<!-- NIGHT ACTION -->
+<div id="screen-night" class="screen">
+  <div class="phase-badge badge-night">🌙 夜フェーズ — <span id="night-day-num"></span></div>
+  <div class="h2" id="night-title"></div>
+  <div class="sub" id="night-desc"></div>
+  <div id="night-actions"></div>
+  <div class="spacer"></div>
+  <button class="btn btn-night" id="night-next-btn">確定</button>
+</div>
+
+<!-- DAY -->
+<div id="screen-day" class="screen">
+  <div class="phase-badge badge-day">☀️ 昼フェーズ — <span id="day-num"></span></div>
+  <div class="notif">
+    <div class="notif-from">🔔 RESE — アプリ運営</div>
+    <div class="notif-body" id="day-announcement"></div>
+  </div>
+  <div class="topic-box">
+    <div class="topic-label">今日のトークテーマ</div>
+    <div class="topic-text" id="day-topic"></div>
+  </div>
+  <div id="day-phase-info" class="day-phase-block">
+    <div class="day-phase-title" id="day-phase-title">💬 あるあるトークタイム</div>
+    <div class="day-phase-desc" id="day-phase-desc">テーマについてみんなで話しましょう！</div>
+  </div>
+  <div class="timer-label" id="timer-label">あるあるトーク</div>
+  <div class="timer-big" id="timer-display">3:00</div>
+  <div id="eliminated-area" style="display:none;margin-bottom:12px;">
+    <div style="font-size:12px;color:var(--text-hint);margin-bottom:6px;">退会・BAN済み</div>
+    <div id="eliminated-list"></div>
+  </div>
+  <button class="btn btn-pink" id="timer-btn" onclick="handleTimerBtn()">タイマー開始</button>
+  <button class="btn btn-outline" id="skip-phase-btn" style="margin-top:10px;" onclick="skipPhase()">スキップ ›</button>
+  <button class="btn btn-outline" id="goto-vote-btn" style="display:none;margin-top:10px;" onclick="beginVoteTurns()">議論終了 → 投票へ</button>
+</div>
+
+<!-- VOTE PASS -->
+<div id="screen-vote-pass" class="screen">
+  <div class="phase-badge badge-vote" style="margin-bottom:20px;">🗳️ 通報投票</div>
+  <div class="vpass-name" id="vpass-name"></div>
+  <div class="vpass-msg" id="vpass-msg"></div>
+  <button class="btn btn-pink" onclick="vpassNext()">投票する</button>
+</div>
+
+<!-- VOTE -->
+<div id="screen-vote" class="screen">
+  <div class="phase-badge badge-vote">🗳️ <span id="voter-name-badge"></span> の投票</div>
+  <div class="h2">怪しい人を選んでください</div>
+  <div class="sub">タップで選択して投票ボタンを押してください</div>
+  <div id="vote-list"></div>
+  <div class="spacer"></div>
+  <button class="btn btn-danger" id="vote-confirm-btn" style="display:none;" onclick="submitVote()">この人に投票する</button>
+</div>
+
+<!-- VOTE RESULT -->
+<div id="screen-vote-result" class="screen">
+  <div class="phase-badge badge-vote">🗳️ 投票結果</div>
+  <div class="h2">運営からのお知らせ</div>
+  <div class="notif" id="vote-result-notif">
+    <div class="notif-from">🚫 RESE — アカウント管理チーム</div>
+    <div class="notif-body" id="vote-result-body"></div>
+  </div>
+  <div id="vote-result-detail" style="font-size:13px;color:var(--text-sub);line-height:1.9;margin-bottom:18px;"></div>
+  <div class="spacer"></div>
+  <button class="btn btn-pink" id="vote-result-next-btn"></button>
+</div>
+
+<!-- TIE TIMER -->
+<div id="screen-tie" class="screen">
+  <div class="phase-badge badge-vote" style="margin-bottom:20px;">⚖️ 同票</div>
+  <div style="font-size:20px;font-weight:700;color:#7a5c00;margin-bottom:10px;">同票です</div>
+  <div style="font-size:14px;color:#5a4500;line-height:1.7;margin-bottom:24px;">もう1分話し合ってから再投票してください。</div>
+  <div class="notif" style="background:#fff8e6;border-color:#f0d07a;">
+    <div class="notif-from" style="color:#7a5c00;">🗳️ 投票内訳</div>
+    <div class="notif-body" style="color:#5a4500;" id="tie-vote-detail"></div>
+  </div>
+  <div class="timer-big" id="tie-timer" style="color:#7a5c00;">1:00</div>
+  <button class="btn" style="background:#7a5c00;color:#fff;margin-bottom:10px;" id="tie-timer-btn" onclick="toggleTieTimer()">タイマー開始</button>
+  <button class="btn btn-outline" id="tie-revote-btn" style="display:none;" onclick="beginVoteTurns()">再投票する</button>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="screen">
+  <div class="result-emoji" id="result-icon"></div>
+  <div class="result-title" id="result-title"></div>
+  <div class="result-sub" id="result-sub"></div>
+  <button class="btn btn-pink" onclick="resetGame()">もう一度プレイ</button>
+  <button class="btn btn-outline" onclick="show('screen-title');resetGame()">タイトルに戻る</button>
+</div>
+
+</div>
+<script>
+// 配役はbuildRoleSet()で動的生成
+const ROLES={
+  lesbian: {name:"レズビアン",icon:"💜",team:"lesbian",isActionRole:false,desc:`あなたはこのアプリを利用するレズビアンです。
+最近、男性ユーザーが紛れ込んでいるという噂が広まっています。
+他の利用者と協力し、怪しいアカウントを通報しましょう。`},
+  nekama:  {name:"ネカマ",    icon:"🎭",team:"nekama", isActionRole:true, desc:`あなたは女性を装ってこのアプリに登録しています。
+毎晩、気になった利用者1人にDMを送ることができます。
+DMを送られた利用者はショックを受けて翌朝までに退会します。
+正体がバレないように振る舞いながら、利用者たちを騙しましょう。
+レズビアン陣営の人数以下になれば勝利です。`},
+  gaydar:  {name:"ゲイダー",  icon:"🔮",team:"lesbian",isActionRole:true, desc:`あなたは優れた感覚を持つレズビアンです。
+毎晩、気になる利用者1人の正体を調査できます。
+荒らしを調査した場合、レズビアンと表示されます。
+仲間にうまく情報を伝え、ネカマをBANに導きましょう。`},
+  oneeSan: {name:"年上お姉さん",icon:"🛡️",team:"lesbian",isActionRole:true,desc:`あなたは包容力のある年上のお姉さんです。
+毎晩、利用者1人を見守ることができます。
+あなたに見守られている利用者は、その夜DMを受け取っても退会しません。
+ネカマをBANし、レズビアン陣営を勝利に導きましょう。`},
+  araashi: {name:"荒らし",    icon:"🔥",team:"nekama", isActionRole:false,desc:`あなたはこのアプリを面白半分で荒らしています。
+ネカマが紛れ込んでいることを知っていますが、通報されないよう協力しています。
+利用者たちを混乱させ、議論をかき回しましょう。
+ネカマ陣営が勝利すれば、あなたも勝利です。`}
+};
+const TOPICS=["初めて自分がレズビアンだと気づいた瞬間","マッチングアプリで経験したあるある話","推しのタイプについてみんなでトーク","カミングアウトした・してないエピソード","女の子にときめいた瞬間ベスト３","レズビアンだとバレそうになったヒヤヒヤ体験","恋愛で失敗したおもしろエピソード","好きなタイプの見た目・性格について","初めて女の子とデートしたときの話","マッチングアプリで面白かったやり取り"];
+const DM_MSGS=["「実は俺、男なんだけど…でも本当に君のことが好きなんだ」","「ずっと騙してごめん。本当は男なんだ。好きだから正直に言いたかった」","「嘘ついてた。俺、男だよ。でも君には本当の自分を見せたくて」","「言いたくなかったけど正直に言う。俺、男なんだよね…それでも話したくて」"];
+const NIGHT_IDLE_ACTIVITIES=[
+  "気が合いそうな人を見つけて「いいね！」を送りました。返事が来ると嬉しいな。",
+  "近くで開催されるレズビアン女子オフ会を見つけて、参加申し込みをしました。楽しみ！",
+  "ずっと気になっていた人からのDMに、ようやく返事を送りました。",
+  "プロフィールを見ていたら、趣味がぴったりの人を発見。メッセージを送りました。",
+  "フォロー中の子の新しい写真に「かわいい！」とコメントしました。",
+  "マッチングした人とトークが弾んで、気づいたら深夜まで話してしまいました。",
+  "好みのタイプの人が新しくアプリに登録していたのでさっそくいいね！",
+  "アプリ内のコミュニティに参加して、自己紹介を投稿しました。"
+];
+const GAYDAR_LES_MSGS=[
+  "うん！間違いない、この可愛さは絶対女の子だわ💜",
+  "やっぱり！雰囲気でわかる、この子はレズビアン間違いなし✨",
+  "ゲイダーが反応してる！この子は本物のレズビアンよ💜",
+  "確信した。オーラが違う、この可愛さは女の子だわ！",
+  "ピン！ときたわ、この子は絶対レズビアン。安心して💜"
+];
+const GAYDAR_NEKAMA_MSGS=[
+  "あ…なんか違和感がある。この人、ネカマかもしれない…🚨",
+  "ゲイダーが警戒を発してる。この人の正体は…ネカマ！気をつけて🚨",
+  "嫌な予感がした。この人、本当はネカマだわ。信用しないで🚨"
+];
+
+let G={
+  players:[],numPlayers:5,nekamaCount:1,day:1,
+  revealIndex:0,
+  nightQueue:[],nightQueueIdx:0,
+  nekamTarget:null,guardTarget:null,lastGuard:null,
+  timerSec:0,timerInterval:null,timerRunning:false,
+  dayPhase:'talk', // 'talk' | 'discuss'
+  voteQueue:[],voteQueueIdx:0,votes:{},
+  eliminated:[],
+  tieTimerSec:60,tieTimerInterval:null,tieTimerRunning:false
+};
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screen-players') updateSetupUI();
+}
+
+// ---- SETUP ----
+// 人数・ネカマ数の管理
+G.numPlayers = 5;
+G.nekamaCount = 1;
+
+function buildRoleSet(num, nekama){
+  // ネカマ、荒らし(nekama陣営)、ゲイダー、年上お姉さん、残りレズビアン
+  // 5人未満はnekama=1固定
+  const roles = [];
+  for(let i=0;i<nekama;i++) roles.push('nekama');
+  // 荒らしは1人固定（人数が許せば）
+  const remaining = num - nekama;
+  // ゲイダー
+  if(remaining >= 2) roles.push('gaydar');
+  // 年上お姉さん（6人以上）
+  if(num >= 6 && remaining >= 3) roles.push('oneeSan');
+  // 荒らし
+  if(remaining >= (roles.length - nekama + 2)) roles.push('araashi');
+  // 残りをレズビアンで埋める
+  while(roles.length < num) roles.push('lesbian');
+  return roles;
+}
+
+function updateSetupUI(){
+  const num = G.numPlayers;
+  const nekama = G.nekamaCount;
+  document.getElementById('num-display').textContent = num;
+  document.getElementById('nekama-display').textContent = nekama;
+
+  // 名前フィールド更新
+  const fields = document.getElementById('name-fields');
+  const existing = fields.querySelectorAll('.name-input');
+  const existingVals = Array.from(existing).map(e=>e.value);
+  fields.innerHTML = '';
+  for(let i=0;i<num;i++){
+    fields.innerHTML+=`<div class="name-input-row">
+      <label class="name-label">プレイヤー${i+1}</label>
+      <input class="name-input" id="name-${i}" type="text" placeholder="プレイヤー${i+1}" maxlength="10" value="${existingVals[i]||''}">
+    </div>`;
+  }
+
+  // バランスチェック（ネカマが過半数以上はNG）
+  const warn = document.getElementById('role-warning');
+  const btn = document.getElementById('start-btn');
+  if(nekama >= Math.ceil(num/2)){
+    warn.style.display='block';
+    btn.disabled=true;
+    btn.style.opacity='0.4';
+  }else{
+    warn.style.display='none';
+    btn.disabled=false;
+    btn.style.opacity='1';
+  }
+
+  // 配役プレビュー
+  const roles = buildRoleSet(num, nekama);
+  const counts = {};
+  roles.forEach(r=>counts[r]=(counts[r]||0)+1);
+  document.getElementById('role-chips').innerHTML=Object.entries(counts).map(([r,c])=>
+    `<span class="role-chip">${ROLES[r].icon} ${ROLES[r].name} ×${c}</span>`
+  ).join('');
+}
+
+function changeNum(delta){
+  const n = Math.min(10, Math.max(5, G.numPlayers + delta));
+  G.numPlayers = n;
+  // ネカマが多すぎる場合は自動調整
+  if(G.nekamaCount >= Math.ceil(n/2)) G.nekamaCount = Math.max(1, Math.ceil(n/2)-1);
+  updateSetupUI();
+}
+
+function changeNekama(delta){
+  const max = Math.ceil(G.numPlayers/2) - 1;
+  G.nekamaCount = Math.min(max, Math.max(1, G.nekamaCount + delta));
+  updateSetupUI();
+}
+
+function selectNum(n,el){ G.numPlayers=n; updateSetupUI(); }
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startGame(){
+  const roles=shuffle(buildRoleSet(G.numPlayers, G.nekamaCount));
+  G.players=roles.map((r,i)=>{
+    const inp=document.getElementById(`name-${i}`);
+    const name=(inp&&inp.value.trim())||`プレイヤー${i+1}`;
+    return{id:i,name,role:r,alive:true};
+  });
+  G.day=1;G.revealIndex=0;G.eliminated=[];
+  G.nekamTarget=null;G.guardTarget=null;G.lastGuard=null;
+  buildRevealCards();
+  show('screen-reveal');
+}
+
+// ---- REVEAL ----
+// 役職確認は「タップで表示→確認したボタンで次へ」方式
+// 長押し不要でスクロールも自由
+let _revealShowing = false;
+
+function buildRevealCards(){
+  const c=document.getElementById('reveal-cards');
+  c.innerHTML='';
+  _revealShowing = false;
+  G.players.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.className='reveal-card'+(i===G.revealIndex?' active-card':i<G.revealIndex?' done':'');
+    if(i===G.revealIndex){
+      div.innerHTML=`
+        <div id="rhid-${i}">
+          <div style="font-size:32px;margin-bottom:10px;">👆</div>
+          <div style="font-size:16px;color:var(--text-sub);margin-bottom:4px;">${p.name} さんへ</div>
+          <div style="font-size:14px;color:var(--text-hint);">タップして役職を確認</div>
+        </div>
+        <div id="rshow-${i}" style="display:none;">
+          <div class="reveal-role-name">${ROLES[p.role].icon} ${ROLES[p.role].name}</div>
+          <div class="reveal-role-desc" style="margin-bottom:16px;">${ROLES[p.role].desc}</div>
+          <button onclick="rNext(${i})" class="btn btn-pink" style="margin-top:8px;">確認した → 次の人へ</button>
+        </div>`;
+      div.addEventListener('click', ()=>rShow(i));
+    }else if(i<G.revealIndex){
+      div.innerHTML=`<div style="font-size:14px;color:var(--text-hint);">✅ ${p.name}</div>`;
+    }else{
+      div.innerHTML=`<div style="font-size:14px;color:var(--text-hint);">待機中...</div>`;
+    }
+    c.appendChild(div);
+  });
+  const done=G.revealIndex>=G.players.length;
+  document.getElementById('reveal-done-btn').style.display=done?'block':'none';
+  document.getElementById('reveal-instruction').textContent=done
+    ?'全員の確認が終わりました！'
+    :`${G.players[G.revealIndex].name} の番です。スマホを渡してください。`;
+}
+function rShow(i){
+  if(_revealShowing) return;
+  _revealShowing = true;
+  document.getElementById(`rhid-${i}`).style.display='none';
+  document.getElementById(`rshow-${i}`).style.display='block';
+  // 表示されたカードまでスクロール
+  setTimeout(()=>{
+    document.getElementById(`rshow-${i}`).scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
+function rNext(i){
+  G.revealIndex++;
+  _revealShowing = false;
+  buildRevealCards();
+  // 先頭にスクロール
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function rHide(i){
+  // 旧互換のため残す（使用しない）
+}
+
+// ---- NIGHT TURN QUEUE ----
+// Queue: ALL alive players in seat order (id order)
+// Each gets either 'pass' screen or 'action' screen depending on role
+function beginNightTurns(){
+  G.nightQueueIdx=0;
+  G.nekamTarget=null;G.guardTarget=null;
+  // Build queue: action roles first (nekama→gaydar→oneeSan), then others
+  const alive=G.players.filter(p=>p.alive);
+  const actionOrder=['nekama','gaydar','oneeSan'];
+  const actionPlayers=[];
+  actionOrder.forEach(role=>{
+    alive.filter(p=>p.role===role).forEach(p=>actionPlayers.push(p));
+  });
+  const idlePlayers=alive.filter(p=>!['nekama','gaydar','oneeSan'].includes(p.role));
+  // Actually: show ALL players in id order, mixing action and idle
+  // Per user request: pass from player 1 in order
+  G.nightQueue=alive.slice().sort((a,b)=>a.id-b.id);
+  runNightTurn();
+}
+
+function runNightTurn(){
+  if(G.nightQueueIdx>=G.nightQueue.length){
+    resolveNight();return;
+  }
+  // まず引き渡し画面を表示してから実際のアクション or パスへ
+  const player=G.nightQueue[G.nightQueueIdx];
+  document.getElementById('nnext-day').textContent=`${G.day}日目`;
+  document.getElementById('nnext-name').textContent=`${player.name} の番です`;
+  document.getElementById('nnext-msg').textContent='スマホを渡してください。';
+  show('screen-night-next');
+}
+
+function nightNextAfterHandoff(){
+  const player=G.nightQueue[G.nightQueueIdx];
+  const role=player.role;
+  if(role==='nekama'||role==='gaydar'||role==='oneeSan'){
+    renderNightAction(player);
+    show('screen-night');
+  }else{
+    const activity=NIGHT_IDLE_ACTIVITIES[Math.floor(Math.random()*NIGHT_IDLE_ACTIVITIES.length)];
+    document.getElementById('npass-day').textContent=`${G.day}日目`;
+    document.getElementById('npass-name').textContent=`${player.name} の夜`;
+    document.getElementById('npass-instruction').textContent='スマホを確認してください。あなたは今夜…';
+    document.getElementById('npass-activity').textContent=activity;
+    show('screen-night-pass');
+  }
+}
+
+function nightTurnNext(){
+  G.nightQueueIdx++;
+  runNightTurn();
+}
+
+let _sel=null;
+
+function renderNightAction(player){
+  _sel=null;
+  const alive=G.players.filter(p=>p.alive);
+  document.getElementById('night-day-num').textContent=`${G.day}日目`;
+  const nb=document.getElementById('night-next-btn');
+  nb.onclick=nightNext;
+
+  if(player.role==='nekama'){
+    document.getElementById('night-title').textContent=`🎭 ${player.name} の番`;
+    if(G.day===1){
+      const firstNightMsgs=["どの子も可愛いな…誰に声かけようかな。","プロフィール見てたら時間経つの忘れちゃった。みんな可愛い。","うーん、誰がタイプかな。もう少し様子みよっと。","アプリ始めたばかりで緊張する。でもみんな可愛い…","今日は様子見しとこう。誰に話しかけようか考え中。"];
+      const msg=firstNightMsgs[Math.floor(Math.random()*firstNightMsgs.length)];
+      document.getElementById('night-desc').textContent='あなたはネカマです。初日の夜はDMを送りません。';
+      document.getElementById('night-actions').innerHTML=`
+        <div class="npass-app-frame">
+          <div class="npass-app-header">
+            <div class="npass-app-icon">💜</div>
+            <div><div class="npass-app-name">RESE</div><div class="npass-app-sub">マッチングアプリ</div></div>
+          </div>
+          <div class="npass-activity">${msg}</div>
+        </div>`;
+      nb.textContent='確認した → 次へ';
+      nb.onclick=()=>{G.nightQueueIdx++;runNightTurn();};
+    }else{
+      const targets=alive.filter(p=>p.role!=='nekama');
+      const dmMsg=DM_MSGS[Math.floor(Math.random()*DM_MSGS.length)];
+      document.getElementById('night-desc').textContent='あなたはネカマです。今夜DMを送る相手を選んでください。';
+      document.getElementById('night-actions').innerHTML=`
+        <div class="dm-phone">
+          <div class="dm-header">
+            <div class="dm-avatar">📱</div>
+            <div><div class="dm-username">RESE DM 送信画面</div><div class="dm-app">マッチングアプリ</div></div>
+          </div>
+          <div class="dm-bubble-wrap"><div class="dm-bubble">${dmMsg}</div></div>
+        </div>
+        <div class="night-card">
+          <div style="font-size:13px;color:var(--night-sub);margin-bottom:10px;">DMを送る相手を選んでください：</div>
+          ${targets.map(p=>`<button class="night-player-btn" onclick="selN(${p.id},this)">${p.name}</button>`).join('')}
+        </div>`;
+      nb.textContent='確定';
+      nb.onclick=nightNext;
+    }
+  }else if(player.role==='gaydar'){
+    document.getElementById('night-title').textContent=`🔮 ${player.name} の番`;
+    document.getElementById('night-desc').textContent='あなたはゲイダーです。正体を確認したい相手を選んでください。';
+    const targets=alive.filter(p=>p.id!==player.id);
+    document.getElementById('night-actions').innerHTML=`<div class="night-card">
+      <div style="font-size:13px;color:var(--night-sub);margin-bottom:10px;">確認する相手を選んでください：</div>
+      ${targets.map(p=>`<button class="night-player-btn" onclick="selN(${p.id},this)">${p.name}</button>`).join('')}
+    </div>`;
+    nb.textContent='確認する';
+  }else if(player.role==='oneeSan'){
+    document.getElementById('night-title').textContent=`🛡️ ${player.name} の番`;
+    document.getElementById('night-desc').textContent='あなたは年上お姉さんです。今夜守る相手を選んでください。';
+    const targets=alive.filter(p=>p.alive);
+    document.getElementById('night-actions').innerHTML=`<div class="night-card">
+      <div style="font-size:13px;color:var(--night-sub);margin-bottom:10px;">守る相手を選んでください：</div>
+      ${targets.map(p=>`<button class="night-player-btn" onclick="selN(${p.id},this)">${p.name}</button>`).join('')}
+    </div>`;
+    nb.textContent='確定';
+  }
+}
+
+function selN(id,el){
+  document.querySelectorAll('.night-player-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  _sel=id;
+}
+
+function nightNext(){
+  if(_sel===null){alert('相手を選んでください');return;}
+  const player=G.nightQueue[G.nightQueueIdx];
+  if(player.role==='nekama'){
+    G.nekamTarget=_sel;
+    G.nightQueueIdx++;
+    runNightTurn();
+  }else if(player.role==='oneeSan'){
+    G.lastGuard=_sel;G.guardTarget=_sel;
+    G.nightQueueIdx++;
+    runNightTurn();
+  }else if(player.role==='gaydar'){
+    // Show result
+    const target=G.players.find(p=>p.id===_sel);
+    // araashi → show as lesbian
+    const isLes=(target.role==='lesbian'||target.role==='araashi'||target.role==='gaydar'||target.role==='oneeSan');
+    const displayRole=isLes?'lesbian':'nekama';
+    const msgs=isLes?GAYDAR_LES_MSGS:GAYDAR_NEKAMA_MSGS;
+    const msg=msgs[Math.floor(Math.random()*msgs.length)];
+    const color=isLes?'#2e7d32':'#c0392b';
+    const roleLabel=isLes?'💜 レズビアン':'🎭 ネカマ';
+    document.getElementById('night-actions').innerHTML=`<div class="night-card" style="text-align:center;padding:24px 18px;">
+      <div style="font-size:13px;color:var(--night-sub);margin-bottom:14px;">🔮 ゲイダーの結果</div>
+      <div style="font-size:17px;color:var(--night-text);margin-bottom:10px;">${target.name} は…</div>
+      <div style="font-size:26px;font-weight:700;color:${color};margin-bottom:14px;">${roleLabel}</div>
+      <div style="font-size:15px;color:var(--night-sub);line-height:1.7;font-style:italic;">${msg}</div>
+      <div style="font-size:12px;color:#3C3489;margin-top:16px;">確認したら次の人へ渡してください</div>
+    </div>`;
+    const nb=document.getElementById('night-next-btn');
+    nb.textContent='確認した → 次へ';
+    nb.onclick=()=>{G.nightQueueIdx++;runNightTurn();};
+  }
+}
+
+// ---- NIGHT RESOLVE ----
+function resolveNight(){
+  let announcement='';
+  if(G.nekamTarget!==null&&G.nekamTarget!==G.guardTarget){
+    const t=G.players.find(p=>p.id===G.nekamTarget);
+    t.alive=false;
+    G.eliminated.push({id:t.id,name:t.name,role:t.role,how:'dm'});
+    announcement=`${t.name} さんが、信じていたユーザーからの不審なDMにショックを受け、自主退会しました。`;
+  }else{
+    announcement='昨夜は退会者がいませんでした。';
+  }
+  G.nekamTarget=null;G.guardTarget=null;
+  if(checkWin())return;
+
+  // Setup day
+  G.dayPhase='talk';
+  document.getElementById('day-num').textContent=`${G.day}日目`;
+  document.getElementById('day-announcement').textContent=announcement;
+  document.getElementById('day-topic').textContent=TOPICS[Math.floor(Math.random()*TOPICS.length)];
+  document.getElementById('day-phase-title').textContent='💬 あるあるトークタイム';
+  document.getElementById('day-phase-desc').textContent='テーマについてみんなで話しましょう！（3分）';
+  document.getElementById('timer-label').textContent='あるあるトーク';
+  document.getElementById('goto-vote-btn').style.display='none';
+  document.getElementById('timer-btn').textContent='タイマー開始';
+  updateEliminatedList();
+  clearInterval(G.timerInterval);
+  G.timerRunning=false;
+  G.timerSec=180;
+  const d=document.getElementById('timer-display');
+  d.textContent='3:00';d.classList.remove('warning');
+  show('screen-day');
+}
+
+// ---- DAY TIMER ----
+let _dayTimerPhase=0; // 0=talk 1=discuss
+
+function handleTimerBtn(){
+  if(!G.timerRunning){
+    startDayTimer();
+  }else{
+    pauseDayTimer();
+  }
+}
+
+function startDayTimer(){
+  G.timerRunning=true;
+  document.getElementById('timer-btn').textContent='一時停止';
+  G.timerInterval=setInterval(()=>{
+    G.timerSec--;
+    const m=Math.floor(G.timerSec/60),s=G.timerSec%60;
+    const d=document.getElementById('timer-display');
+    d.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(G.timerSec<=30)d.classList.add('warning');
+    if(G.timerSec<=0){
+      clearInterval(G.timerInterval);G.timerRunning=false;
+      d.classList.remove('warning');
+      if(G.dayPhase==='talk'){
+        // Switch to discuss phase
+        G.dayPhase='discuss';
+        G.timerSec=180;
+        d.textContent='3:00';
+        document.getElementById('timer-btn').textContent='タイマー開始';
+        document.getElementById('timer-label').textContent='BANを誰にするか議論';
+        document.getElementById('day-phase-title').textContent='🚨 ネカマ通報タイム';
+        document.getElementById('day-phase-desc').textContent='誰のアカウントをBANするか話し合ってください！（3分）';
+        // Show nekama notification
+        document.getElementById('day-announcement').textContent='⚠️ アプリ内にネカマが存在することを確認しました。利用者の皆さんで不審なアカウントを特定し、通報してください。';
+      }else{
+        // discuss done
+        document.getElementById('timer-btn').textContent='タイマー開始';
+        document.getElementById('goto-vote-btn').style.display='block';
+      }
+    }
+  },1000);
+}
+
+function pauseDayTimer(){
+  clearInterval(G.timerInterval);G.timerRunning=false;
+  document.getElementById('timer-btn').textContent='再開';
+  if(G.dayPhase==='discuss'){
+    document.getElementById('goto-vote-btn').style.display='block';
+  }
+}
+
+// ---- VOTE TURN QUEUE ----
+function beginVoteTurns(){
+  clearInterval(G.timerInterval);G.timerRunning=false;
+  const alive=G.players.filter(p=>p.alive);
+  G.voteQueue=alive.slice().sort((a,b)=>a.id-b.id).map(p=>p.id);
+  G.voteQueueIdx=0;
+  G.votes={};
+  alive.forEach(p=>G.votes[p.id]=0);
+  showVotePass();
+}
+
+function showVotePass(){
+  if(G.voteQueueIdx>=G.voteQueue.length){showVoteResults();return;}
+  const pid=G.voteQueue[G.voteQueueIdx];
+  const player=G.players.find(p=>p.id===pid);
+  const remaining=G.voteQueue.length-G.voteQueueIdx;
+  document.getElementById('vpass-name').textContent=`${player.name} の番`;
+  document.getElementById('vpass-msg').textContent=`スマホを ${player.name} さんに渡してください。\n「投票する」を押して投票してください。\n（残り ${remaining} 人）`;
+  show('screen-vote-pass');
+}
+
+function vpassNext(){
+  const pid=G.voteQueue[G.voteQueueIdx];
+  const player=G.players.find(p=>p.id===pid);
+  document.getElementById('voter-name-badge').textContent=player.name;
+  const alive=G.players.filter(p=>p.alive);
+  document.getElementById('vote-list').innerHTML=alive.map(p=>`
+    <div class="vote-item" id="vi-${p.id}" onclick="selectVote(${p.id})">
+      <span class="vote-name">${p.name}</span>
+      <span class="vote-count" id="vc-${p.id}"></span>
+    </div>`).join('');
+  _vsel=null;
+  document.getElementById('vote-confirm-btn').style.display='none';
+  document.getElementById('vote-confirm-btn').dataset.selected='';
+  show('screen-vote');
+}
+
+let _vsel=null;
+function selectVote(id){
+  if(_vsel!==null)document.getElementById(`vi-${_vsel}`).classList.remove('voted-for');
+  _vsel=id;
+  document.getElementById(`vi-${id}`).classList.add('voted-for');
+  const btn=document.getElementById('vote-confirm-btn');
+  btn.style.display='block';btn.dataset.selected=id;
+}
+
+function submitVote(){
+  const id=parseInt(document.getElementById('vote-confirm-btn').dataset.selected);
+  if(isNaN(id))return;
+  G.votes[id]=(G.votes[id]||0)+1;
+  _vsel=null;
+  G.voteQueueIdx++;
+  showVotePass();
+}
+
+function showVoteResults(){
+  const alive=G.players.filter(p=>p.alive);
+  let max=0,topId=null,tie=false;
+  Object.entries(G.votes).forEach(([id,v])=>{
+    const n=parseInt(v);
+    if(n>max){max=n;topId=parseInt(id);tie=false;}
+    else if(n===max&&max>0){tie=true;}
+  });
+  const detail=alive.map(p=>`${p.name}：${G.votes[p.id]||0}票`).join('　');
+  document.getElementById('vote-result-detail').textContent=`投票内訳：${detail}`;
+  if(tie||topId===null||max===0){
+    // Show tie screen
+    document.getElementById('tie-vote-detail').textContent=detail;
+    G.tieTimerSec=60;G.tieTimerRunning=false;
+    clearInterval(G.tieTimerInterval);
+    document.getElementById('tie-timer').textContent='1:00';
+    document.getElementById('tie-timer-btn').textContent='タイマー開始';
+    document.getElementById('tie-revote-btn').style.display='none';
+    show('screen-tie');
+    return;
+  }
+  const banned=G.players.find(p=>p.id===topId);
+  banned.alive=false;
+  G.eliminated.push({id:banned.id,name:banned.name,role:banned.role,how:'ban'});
+  G.day++;
+  document.getElementById('vote-result-body').textContent=`${banned.name} さんのアカウントは、複数ユーザーからの通報により、利用規約違反として強制BANされました。`;
+  document.getElementById('vote-result-next-btn').textContent='次のフェーズへ';
+  document.getElementById('vote-result-next-btn').onclick=afterVoteResult;
+  show('screen-vote-result');
+}
+
+function afterVoteResult(){
+  if(checkWin())return;
+  beginNightTurns();
+}
+
+// ---- TIE TIMER ----
+function toggleTieTimer(){
+  if(!G.tieTimerRunning){
+    G.tieTimerRunning=true;
+    document.getElementById('tie-timer-btn').textContent='一時停止';
+    G.tieTimerInterval=setInterval(()=>{
+      G.tieTimerSec--;
+      const m=Math.floor(G.tieTimerSec/60),s=G.tieTimerSec%60;
+      document.getElementById('tie-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+      if(G.tieTimerSec<=0){
+        clearInterval(G.tieTimerInterval);G.tieTimerRunning=false;
+        document.getElementById('tie-timer-btn').textContent='終了';
+        document.getElementById('tie-revote-btn').style.display='block';
+      }
+    },1000);
+  }else{
+    clearInterval(G.tieTimerInterval);G.tieTimerRunning=false;
+    document.getElementById('tie-timer-btn').textContent='再開';
+    document.getElementById('tie-revote-btn').style.display='block';
+  }
+}
+
+// ---- WIN CHECK ----
+function checkWin(){
+  const alive=G.players.filter(p=>p.alive);
+  const nekamas=alive.filter(p=>p.role==='nekama');
+  const others=alive.filter(p=>p.role!=='nekama');
+  if(nekamas.length===0){showResult('lesbian');return true;}
+  if(nekamas.length>=others.length){showResult('nekama');return true;}
+  return false;
+}
+
+function showResult(winner){
+  const allDead=G.players.filter(p=>!p.alive);
+  const detail=allDead.length>0
+    ?allDead.map(p=>{
+        const e=G.eliminated.find(x=>x.id===p.id);
+        return `${ROLES[p.role].icon} ${p.name}（${e?.how==='ban'?'BAN':'自主退会'}）`;
+      }).join('\n')
+    :'';
+  if(winner==='lesbian'){
+    document.getElementById('result-icon').textContent='💜';
+    document.getElementById('result-title').textContent='レズビアン陣営の勝利！';
+    document.getElementById('result-sub').textContent='ネカマを全員BANしました！\nマッチングアプリに平和が戻りました。\n\n'+detail;
+  }else{
+    document.getElementById('result-icon').textContent='🎭';
+    document.getElementById('result-title').textContent='ネカマ陣営の勝利！';
+    document.getElementById('result-sub').textContent='ネカマがアプリに居座ることに成功！\n皆の目を欺いた完全勝利です。\n\n'+detail;
+  }
+  show('screen-result');
+}
+
+function updateEliminatedList(){
+  const dead=G.players.filter(p=>!p.alive);
+  const ea=document.getElementById('eliminated-area');
+  if(dead.length>0){
+    ea.style.display='block';
+    document.getElementById('eliminated-list').innerHTML=dead.map(p=>
+      `<span class="eliminated-tag">${ROLES[p.role].icon} ${p.name}</span>`
+    ).join('');
+  }else{ea.style.display='none';}
+}
+
+function skipPhase(){
+  clearInterval(G.timerInterval);G.timerRunning=false;
+  const d=document.getElementById('timer-display');
+  d.classList.remove('warning');
+  if(G.dayPhase==='talk'){
+    G.dayPhase='discuss';
+    G.timerSec=180;
+    d.textContent='3:00';
+    document.getElementById('timer-btn').textContent='タイマー開始';
+    document.getElementById('timer-label').textContent='BANを誰にするか議論';
+    document.getElementById('day-phase-title').textContent='🚨 ネカマ通報タイム';
+    document.getElementById('day-phase-desc').textContent='誰のアカウントをBANするか話し合ってください！（3分）';
+    document.getElementById('day-announcement').textContent='⚠️ アプリ内にネカマが存在することを確認しました。利用者の皆さんで不審なアカウントを特定し、通報してください。';
+  }else{
+    document.getElementById('goto-vote-btn').style.display='block';
+  }
+}
+function resetGame(){
+  clearInterval(G.timerInterval);clearInterval(G.tieTimerInterval);
+  G={players:[],numPlayers:5,nekamaCount:1,day:1,revealIndex:0,nightQueue:[],nightQueueIdx:0,
+     nekamTarget:null,guardTarget:null,lastGuard:null,
+     timerSec:0,timerInterval:null,timerRunning:false,dayPhase:'talk',
+     voteQueue:[],voteQueueIdx:0,votes:{},eliminated:[],
+     tieTimerSec:60,tieTimerInterval:null,tieTimerRunning:false};
+  document.querySelectorAll('.num-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('role-preview').style.display='none';
+  document.getElementById('name-inputs').style.display='none';
+  document.getElementById('start-btn').style.display='none';
+  show('screen-players');
+}
+</script>
+</body>
+</html>
